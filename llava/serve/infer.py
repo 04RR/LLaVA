@@ -27,8 +27,8 @@ def load_image(image_file):
 def generate_responses_for_inputs(text_strs, image_paths):
     # Model
     args = argparse.Namespace(
-    model_path=args.model_path,  # Specify the correct model path
-    model_base=args.model_base,
+    model_path="liuhaotian/LLaVA-Lightning-MPT-7B-preview,  # Specify the correct model path
+    model_base=None,
     image_file=None,  # Not needed since we're passing image paths separately
     num_gpus=1,
     conv_mode=None,
