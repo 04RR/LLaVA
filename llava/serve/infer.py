@@ -69,7 +69,7 @@ def generate_responses_for_inputs(text_strs, image_paths, tokenizer, model, imag
     stop_str = conv.sep if conv.sep_style != SeparatorStyle.TWO else conv.sep2
     keywords = [stop_str]
     stopping_criteria = KeywordsStoppingCriteria(keywords, tokenizer, input_ids)
-    streamer = TextStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
+    # streamer = TextStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
 
     with torch.inference_mode():
         output_ids = model.generate(
@@ -78,7 +78,7 @@ def generate_responses_for_inputs(text_strs, image_paths, tokenizer, model, imag
             do_sample=True,
             temperature=0.2,
             max_new_tokens=1024,
-            streamer=streamer,
+            # streamer=streamer,
             use_cache=True,
             stopping_criteria=[stopping_criteria])
 
