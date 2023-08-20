@@ -82,11 +82,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--text_strs", type=str, required=True)
     parser.add_argument("--image_paths", type=str, required=True)
+    parser.add_argument("--model_path", type=str, default="facebook/opt-350m")
+    parser.add_argument("--model_base", type=str, default=None)
     args = parser.parse_args()
     
     model_args = argparse.Namespace(
-    model_path="facebook/opt-350m",  # Specify the correct model path
-    model_base=None,
+    model_path=args.model_path,  # Specify the correct model path
+    model_base=args.model_base,
     image_file=None,  # Not needed since we're passing image paths separately
     num_gpus=1,
     conv_mode=None,
