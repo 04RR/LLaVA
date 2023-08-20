@@ -24,25 +24,10 @@ def load_image(image_file):
     return image
 
 
-def generate_responses_for_inputs(text_strs, image_paths):
-    # Model
-    args = argparse.Namespace(
-    model_path="liuhaotian/LLaVA-Lightning-MPT-7B-preview",  # Specify the correct model path
-    model_base=None,
-    image_file=None,  # Not needed since we're passing image paths separately
-    num_gpus=1,
-    conv_mode=None,
-    temperature=0.2,
-    max_new_tokens=512,
-    load_8bit=False,
-    load_4bit=False,
-    debug=False
-    )
+def generate_responses_for_inputs(text_strs, image_paths, tokenizer, model, image_processor, context_len):
     
     disable_torch_init()
-
-    model_name = get_model_name_from_path(args.model_path)
-    tokenizer, model, image_processor, context_len = load_pretrained_model(args.model_path, args.model_base, model_name, args.load_8bit, args.load_4bit)
+    model_name = 'mpt
 
     if 'llama-2' in model_name.lower():
         conv_mode = "llava_llama_2"
