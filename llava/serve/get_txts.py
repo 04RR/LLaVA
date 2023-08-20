@@ -19,8 +19,9 @@ def load_image(image_file):
 def generate_outputs(texts, image_paths, model_path, model_base="gpt2"):
     # Load model and tokenizer
     model_name = get_model_name_from_path(model_path)
-    tokenizer, model, image_processor, context_len = load_pretrained_model(model_path, model_base)
-
+    # tokenizer, model, image_processor, context_len = load_pretrained_model(model_path, model_base)
+    tokenizer, model, image_processor, context_len = load_pretrained_model(model_path, model_base, model_name, False, False)
+    
     outputs = []
 
     for text, image_path in zip(texts, image_paths):
