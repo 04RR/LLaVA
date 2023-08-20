@@ -92,8 +92,6 @@ def generate_responses_for_inputs(text_strs, image_paths, args):
     
     return responses
 
-    
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -116,7 +114,7 @@ if __name__ == "__main__":
     debug=False
     )
 
-    responses = generate_responses_for_inputs([args.text_strs], [args.image_paths], model_args)
+    responses = generate_responses_for_inputs(args.text_strs, args.image_paths, model_args)
     for text, response in zip(args.image_paths, responses):
-        print(f"Image: {text}")
+        print(f"Image Path: {text}")
         print(f"Description: {response}\n")
