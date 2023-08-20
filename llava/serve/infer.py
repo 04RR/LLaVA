@@ -64,9 +64,9 @@ def generate_responses_for_inputs(text_strs, image_paths):
     else:
         roles = conv.roles
 
-    inp = text
-    if image_path is not None:
-        image = load_image(image_path)
+    inp = text_strs
+    if image_paths is not None:
+        image = load_image(image_paths)
         image_tensor = image_processor.preprocess(image, return_tensors='pt')['pixel_values'].half().cuda()
         
         if model.config.mm_use_im_start_end:
