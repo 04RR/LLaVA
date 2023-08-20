@@ -114,6 +114,8 @@ if __name__ == "__main__":
     debug=False
     )
 
+    print("HELLO ", args.model_path, args.model_base)
+
     responses = generate_responses_for_inputs(args.text_strs, args.image_paths, model_args)
     for text, response in zip(args.image_paths, responses):
         print(f"Image Path: {text}")
