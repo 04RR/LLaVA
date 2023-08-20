@@ -24,8 +24,21 @@ def load_image(image_file):
     return image
 
 
-def generate_responses_for_inputs(text_strs, image_paths, args):
+def generate_responses_for_inputs(text_strs, image_paths):
     # Model
+    args = argparse.Namespace(
+    model_path=args.model_path,  # Specify the correct model path
+    model_base=args.model_base,
+    image_file=None,  # Not needed since we're passing image paths separately
+    num_gpus=1,
+    conv_mode=None,
+    temperature=0.2,
+    max_new_tokens=512,
+    load_8bit=False,
+    load_4bit=False,
+    debug=False
+    )
+    
     disable_torch_init()
 
     model_name = get_model_name_from_path(args.model_path)
@@ -91,30 +104,3 @@ def generate_responses_for_inputs(text_strs, image_paths, args):
         responses.append(outputs)
     
     return responses
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--text_strs", nargs='+', type=str, required=True)
-    parser.add_argument("--image_paths", type=str, nargs='+', required=True)
-    parser.add_argument("--model_path", type=str, default="facebook/opt-350m")
-    parser.add_argument("--model_base", type=str, default=None)
-    args = parser.parse_args()
-    
-    model_args = argparse.Namespace(
-    model_path=args.model_path,  # Specify the correct model path
-    model_base=args.model_base,
-    image_file=None,  # Not needed since we're passing image paths separately
-    num_gpus=1,
-    conv_mode=None,
-    temperature=0.2,
-    max_new_tokens=512,
-    load_8bit=False,
-    load_4bit=False,
-    debug=False
-    )
-
-    responses = generate_responses_for_inputs(args.text_strs, args.image_paths, model_args)
-    for text, response in zip(args.image_paths, responses):
-        print(f"Image Path: {text}")
-        print(f"Description: {response}\n")
