@@ -97,8 +97,8 @@ def generate_responses_for_inputs(text_strs, image_paths, args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--text_strs", type=str, required=True)
-    parser.add_argument("--image_paths", type=str, required=True)
+    parser.add_argument("--text_strs", nargs='+', type=str, required=True)
+    parser.add_argument("--image_paths", type=str, nargs='+', required=True)
     parser.add_argument("--model_path", type=str, default="facebook/opt-350m")
     parser.add_argument("--model_base", type=str, default=None)
     args = parser.parse_args()
