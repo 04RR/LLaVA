@@ -136,7 +136,7 @@ if __name__ == "__main__":
     disable_torch_init()
     model_name = "opt-350m"
     model_path = "facebook/opt-350m"
-    tokenizer, model, image_processor, context_len = load_pretrained_model(model_path, model_name, args.load_8bit, args.load_4bit)
+    tokenizer, model, image_processor, context_len = load_pretrained_model(model_path, None, model_name, args.load_8bit, args.load_4bit)
 
     conv_mode = "llava_v0"  # Update this based on your requirements
     conv = conv_templates[conv_mode].copy()
