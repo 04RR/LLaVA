@@ -134,7 +134,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     disable_torch_init()
-    model_name = get_model_name_from_path(args.model_path)
+    model_name = "opt-350m"
     tokenizer, model, image_processor, context_len = load_pretrained_model(args.model_path, model_name, args.load_8bit, args.load_4bit)
 
     conv_mode = "llava_v0"  # Update this based on your requirements
