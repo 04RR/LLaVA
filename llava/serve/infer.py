@@ -38,12 +38,12 @@ def generate_responses_for_inputs(text_strs, image_paths, tokenizer, model, imag
     else:
         conv_mode = "llava_v0"
 
-    if args.conv_mode is not None and conv_mode != args.conv_mode:
-        print('[WARNING] the auto inferred conversation mode is {}, while `--conv-mode` is {}, using {}'.format(conv_mode, args.conv_mode, args.conv_mode))
+    if conv_mode is not None and conv_mode != conv_mode:
+        print('[WARNING] the auto inferred conversation mode is {}, while `--conv-mode` is {}, using {}'.format(conv_mode, conv_mode, conv_mode))
     else:
-        args.conv_mode = conv_mode
+        conv_mode = conv_mode
 
-    conv = conv_templates[args.conv_mode].copy()
+    conv = conv_templates[conv_mode].copy()
     if "mpt" in model_name.lower():
         roles = ('user', 'assistant')
     else:
