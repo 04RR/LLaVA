@@ -64,46 +64,39 @@ def generate_responses_for_inputs(text_strs, image_paths):
     else:
         roles = conv.roles
 
-    responses = []
-
-    for text, image_path in zip(text_strs, image_paths):
-        print(text, image_path)
-    
-    for text, image_path in zip(text_strs, image_paths):
-        inp = text
-        if image_path is not None:
-            image = load_image(image_path)
-            image_tensor = image_processor.preprocess(image, return_tensors='pt')['pixel_values'].half().cuda()
-            
-            if model.config.mm_use_im_start_end:
-                inp = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_TOKEN + DEFAULT_IM_END_TOKEN + '\n' + inp
-            else:
-                inp = DEFAULT_IMAGE_TOKEN + '\n' + inp
-            conv.append_message(conv.roles[0], inp)
-            image = None
+    inp = text
+    if image_path is not None:
+        image = load_image(image_path)
+        image_tensor = image_processor.preprocess(image, return_tensors='pt')['pixel_values'].half().cuda()
+        
+        if model.config.mm_use_im_start_end:
+            inp = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_TOKEN + DEFAULT_IM_END_TOKEN + '\n' + inp
         else:
-            conv.append_message(conv.roles[0], inp)
-            
-        prompt = conv.get_prompt()
+            inp = DEFAULT_IMAGE_TOKEN + '\n' + inp
+        conv.append_message(conv.roles[0], inp)
+        image = None
+    else:
+        conv.append_message(conv.roles[0], inp)
+        
+    prompt = conv.get_prompt()
 
-        input_ids = tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).cuda()
-        stop_str = conv.sep if conv.sep_style != SeparatorStyle.TWO else conv.sep2
-        keywords = [stop_str]
-        stopping_criteria = KeywordsStoppingCriteria(keywords, tokenizer, input_ids)
-        streamer = TextStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
+    input_ids = tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).cuda()
+    stop_str = conv.sep if conv.sep_style != SeparatorStyle.TWO else conv.sep2
+    keywords = [stop_str]
+    stopping_criteria = KeywordsStoppingCriteria(keywords, tokenizer, input_ids)
+    streamer = TextStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
 
-        with torch.inference_mode():
-            output_ids = model.generate(
-                input_ids,
-                images=image_tensor,
-                do_sample=True,
-                temperature=0.2,
-                max_new_tokens=1024,
-                streamer=streamer,
-                use_cache=True,
-                stopping_criteria=[stopping_criteria])
+    with torch.inference_mode():
+        output_ids = model.generate(
+            input_ids,
+            images=image_tensor,
+            do_sample=True,
+            temperature=0.2,
+            max_new_tokens=1024,
+            streamer=streamer,
+            use_cache=True,
+            stopping_criteria=[stopping_criteria])
 
-        outputs = tokenizer.decode(output_ids[0, input_ids.shape[1]:]).strip()
-        responses.append(outputs)
+    outputs = tokenizer.decode(output_ids[0, input_ids.shape[1]:]).strip()
     
-    return responses
+    return outputs
