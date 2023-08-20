@@ -65,6 +65,9 @@ def generate_responses_for_inputs(text_strs, image_paths):
         roles = conv.roles
 
     responses = []
+
+    for text, image_path in zip(text_strs, image_paths):
+        print(text, image_path)
     
     for text, image_path in zip(text_strs, image_paths):
         inp = text
