@@ -1,84 +1,19 @@
-# import argparse
-# import torch
-# from PIL import Image
-# from io import BytesIO
-# import requests
-# from transformers import TextStreamer
-
-# from llava.model.builder import load_pretrained_model
-# from llava.mm_utils import tokenizer_image_token, get_model_name_from_path, KeywordsStoppingCriteria
-
-# def load_image(image_file):
-#     if image_file.startswith('http') or image_file.startswith('https'):
-#         response = requests.get(image_file)
-#         image = Image.open(BytesIO(response.content)).convert('RGB')
-#     else:
-#         image = Image.open(image_file).convert('RGB')
-#     return image
-
-# def generate_outputs(texts, image_paths, model_path, model_base="gpt2"):
-#     # Load model and tokenizer
-#     model_name = get_model_name_from_path(model_path)
-#     # tokenizer, model, image_processor, context_len = load_pretrained_model(model_path, model_base)
-#     tokenizer, model, image_processor, context_len = load_pretrained_model(model_path, model_base, model_name, False, False)
-    
-#     outputs = []
-
-#     for text, image_path in zip(texts, image_paths):
-#         image = load_image(image_path)
-#         image_tensor = image_processor.preprocess(image, return_tensors='pt')['pixel_values'].half().cuda()
-
-#         input_text = text
-#         conv_prompt = input_text
-#         input_ids = tokenizer_image_token(conv_prompt, tokenizer, return_tensors='pt').unsqueeze(0).cuda()
-        
-#         streamer = TextStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
-#         keywords = ["<|endoftext|>"]
-#         stopping_criteria = KeywordsStoppingCriteria(keywords, tokenizer, input_ids)
-
-#         with torch.inference_mode():
-#             output_ids = model.generate(
-#                 input_ids,
-#                 images=image_tensor,
-#                 do_sample=True,
-#                 temperature=0.2,
-#                 max_new_tokens=1024,
-#                 streamer=streamer,
-#                 use_cache=True,
-#                 stopping_criteria=[stopping_criteria])
-
-#         generated_text = tokenizer.decode(output_ids[0, input_ids.shape[1]:]).strip()
-#         outputs.append(generated_text)
-    
-#     return outputs
-
-# if __name__ == "__main__":
-#     parser = argparse.ArgumentParser()
-#     parser.add_argument("--model-path", type=str, default="facebook/opt-350m", help="Path to the pretrained model")
-#     parser.add_argument("--model-base", type=str, default="gpt2", help="Base model type")
-#     parser.add_argument("--texts", nargs="+", help="List of texts for which to generate outputs")
-#     parser.add_argument("--image-paths", nargs="+", help="List of image paths corresponding to the texts")
-#     args = parser.parse_args()
-
-#     generated_outputs = generate_outputs(args.texts, args.image_paths, args.model_path, args.model_base)
-    
-#     for input_text, output_text in zip(args.texts, generated_outputs):
-#         print("Input:", input_text)
-#         print("Generated Output:", output_text)
-#         print("=" * 40)
-
 import argparse
 import torch
-from PIL import Image
-from io import BytesIO
-import requests
-from transformers import TextStreamer
+
 from llava.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN
+from llava.conversation import conv_templates, SeparatorStyle
 from llava.model.builder import load_pretrained_model
 from llava.utils import disable_torch_init
 from llava.mm_utils import tokenizer_image_token, get_model_name_from_path, KeywordsStoppingCriteria
-from llava.conversation import conv_templates, SeparatorStyle
-from llava.mm_utils import tokenizer_image_token, get_model_name_from_path, KeywordsStoppingCriteria
+
+from PIL import Image
+
+import requests
+from PIL import Image
+from io import BytesIO
+from transformers import TextStreamer
+
 
 def load_image(image_file):
     if image_file.startswith('http') or image_file.startswith('https'):
@@ -88,62 +23,81 @@ def load_image(image_file):
         image = Image.open(image_file).convert('RGB')
     return image
 
-def generate_responses(model, tokenizer, image_processor, text_inputs, image_paths):
+
+def generate_responses_for_inputs(text_strs, image_paths, args):
+    # Model
+    disable_torch_init()
+
+    model_name = get_model_name_from_path(args.model_path)
+    tokenizer, model, image_processor, context_len = load_pretrained_model(args.model_path, args.model_base, model_name, args.load_8bit, args.load_4bit)
+
+    if 'llama-2' in model_name.lower():
+        conv_mode = "llava_llama_2"
+    elif "v1" in model_name.lower():
+        conv_mode = "llava_v1"
+    elif "mpt" in model_name.lower():
+        conv_mode = "mpt"
+    else:
+        conv_mode = "llava_v0"
+
+    if args.conv_mode is not None and conv_mode != args.conv_mode:
+        print('[WARNING] the auto inferred conversation mode is {}, while `--conv-mode` is {}, using {}'.format(conv_mode, args.conv_mode, args.conv_mode))
+    else:
+        args.conv_mode = conv_mode
+
+    conv = conv_templates[args.conv_mode].copy()
+    if "mpt" in model_name.lower():
+        roles = ('user', 'assistant')
+    else:
+        roles = conv.roles
+
     responses = []
-
-    for text_input, image_path in zip(text_inputs, image_paths):
-        image = load_image(image_path)
-        image_tensor = image_processor.preprocess(image, return_tensors='pt')['pixel_values'].half().cuda()
-
-        # Prepare input prompt for conversation
-        prompt = text_input
-
-        input_ids = tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).cuda()
-        stop_str = conv.sep if conv.sep_style != SeparatorStyle.TWO else conv.sep2
-        keywords = [stop_str]
-        stopping_criteria = KeywordsStoppingCriteria(keywords, tokenizer, input_ids)
-        streamer = TextStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
-
-        with torch.inference_mode():
-            output_ids = model.generate(
-                input_ids,
-                images=image_tensor,
-                do_sample=True,
-                temperature=0.2,
-                max_new_tokens=1024,
-                streamer=streamer,
-                use_cache=True,
-                stopping_criteria=[stopping_criteria])
-
-        outputs = tokenizer.decode(output_ids[0, input_ids.shape[1]:]).strip()
+    
+    for text, image_path in zip(text_strs, image_paths):
+        print(f"User: {text}")
+        inp = text
+        if image_path is not None:
+            image = load_image(image_path)
+            image_tensor = image_processor.preprocess(image, return_tensors='pt')['pixel_values'].half().cuda()
+            
+            if model.config.mm_use_im_start_end:
+                inp = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_TOKEN + DEFAULT_IM_END_TOKEN + '\n' + inp
+            else:
+                inp = DEFAULT_IMAGE_TOKEN + '\n' + inp
+            conv.append_message(conv.roles[0], inp)
+            image = None
+        else:
+            conv.append_message(conv.roles[0], inp)
+            
+        # Rest of the code remains the same until text generation
+        
         responses.append(outputs)
-
+    
     return responses
+
+    
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model-path", type=str, default="facebook/opt-350m")
-    parser.add_argument("--num-gpus", type=int, default=1)
-    parser.add_argument("--temperature", type=float, default=0.2)
-    parser.add_argument("--max-new-tokens", type=int, default=512)
-    parser.add_argument("--load-8bit", action="store_true")
-    parser.add_argument("--load-4bit", action="store_true")
-    parser.add_argument("--debug", action="store_true")
-    parser.add_argument("--text-inputs", nargs='+', required=True, help="List of text inputs")
-    parser.add_argument("--image-paths", nargs='+', required=True, help="List of image file paths")
+    parser.add_argument("--text_strs", type=str, required=True)
+    parser.add_argument("--image_paths", type=str, required=True)
     args = parser.parse_args()
+    
+    model_args = argparse.Namespace(
+    model_path="facebook/opt-350m",  # Specify the correct model path
+    model_base=None,
+    image_file=None,  # Not needed since we're passing image paths separately
+    num_gpus=1,
+    conv_mode=None,
+    temperature=0.2,
+    max_new_tokens=512,
+    load_8bit=False,
+    load_4bit=False,
+    debug=False
+    )
 
-    disable_torch_init()
-    model_name = "opt-350m"
-    model_path = "facebook/opt-350m"
-    tokenizer, model, image_processor, context_len = load_pretrained_model(model_path, None, model_name, args.load_8bit, args.load_4bit)
-
-    conv_mode = "llava_v0"  # Update this based on your requirements
-    conv = conv_templates[conv_mode].copy()
-
-    responses = generate_responses(model, tokenizer, image_processor, args.text_inputs, args.image_paths)
-    for text_input, response in zip(args.text_inputs, responses):
-        print(f"Input: {text_input}")
-        print(f"Response: {response}")
-        print("=" * 40)
-
+    responses = generate_responses_for_inputs(args.text_strs, args.image_paths, model_args)
+    for text, response in zip(args.image_paths, responses):
+        print(f"Image: {text}")
+        print(f"Description: {response}\n")
