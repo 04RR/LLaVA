@@ -97,7 +97,7 @@ if __name__ == "__main__":
     debug=False
     )
 
-    responses = generate_responses_for_inputs(args.text_strs, args.image_paths, model_args)
+    responses = generate_responses_for_inputs([args.text_strs], [args.image_paths], model_args)
     for text, response in zip(args.image_paths, responses):
         print(f"Image: {text}")
         print(f"Description: {response}\n")
