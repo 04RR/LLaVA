@@ -135,7 +135,7 @@ if __name__ == "__main__":
 
     disable_torch_init()
     model_name = get_model_name_from_path(args.model_path)
-    tokenizer, model, image_processor, context_len = load_pretrained_model(args.model_path, args.model_base, model_name, args.load_8bit, args.load_4bit)
+    tokenizer, model, image_processor, context_len = load_pretrained_model(args.model_path, model_name, args.load_8bit, args.load_4bit)
 
     conv_mode = "llava_v0"  # Update this based on your requirements
     conv = conv_templates[conv_mode].copy()
@@ -145,3 +145,4 @@ if __name__ == "__main__":
         print(f"Input: {text_input}")
         print(f"Response: {response}")
         print("=" * 40)
+
