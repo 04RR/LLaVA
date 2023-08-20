@@ -54,7 +54,6 @@ def generate_responses_for_inputs(text_strs, image_paths, args):
     responses = []
     
     for text, image_path in zip(text_strs, image_paths):
-        print(f"User: {text}")
         inp = text
         if image_path is not None:
             image = load_image(image_path)
@@ -121,3 +120,5 @@ if __name__ == "__main__":
     for text, response in zip(args.image_paths, responses):
         print(f"Image: {text}")
         print(f"Description: {response}\n")
+
+    return responses
