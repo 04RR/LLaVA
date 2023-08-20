@@ -69,8 +69,26 @@ def generate_responses_for_inputs(text_strs, image_paths, args):
         else:
             conv.append_message(conv.roles[0], inp)
             
-        # Rest of the code remains the same until text generation
-        
+        prompt = conv.get_prompt()
+
+        input_ids = tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).cuda()
+        stop_str = conv.sep if conv.sep_style != SeparatorStyle.TWO else conv.sep2
+        keywords = [stop_str]
+        stopping_criteria = KeywordsStoppingCriteria(keywords, tokenizer, input_ids)
+        streamer = TextStreamer(tokenizer, skip_prompt=True, skip_special_tokens=True)
+
+        with torch.inference_mode():
+            output_ids = model.generate(
+                input_ids,
+                images=image_tensor,
+                do_sample=True,
+                temperature=0.2,
+                max_new_tokens=1024,
+                streamer=streamer,
+                use_cache=True,
+                stopping_criteria=[stopping_criteria])
+
+        outputs = tokenizer.decode(output_ids[0, input_ids.shape[1]:]).strip()
         responses.append(outputs)
     
     return responses
