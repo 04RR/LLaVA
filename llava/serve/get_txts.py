@@ -120,5 +120,3 @@ if __name__ == "__main__":
     for text, response in zip(args.image_paths, responses):
         print(f"Image: {text}")
         print(f"Description: {response}\n")
-
-    return responses
