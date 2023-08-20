@@ -27,7 +27,7 @@ def load_image(image_file):
 def generate_responses_for_inputs(text_strs, image_paths, tokenizer, model, image_processor, context_len):
     
     disable_torch_init()
-    model_name = 'mpt
+    model_name = 'mpt'
 
     if 'llama-2' in model_name.lower():
         conv_mode = "llava_llama_2"
