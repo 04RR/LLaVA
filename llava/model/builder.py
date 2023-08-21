@@ -42,6 +42,7 @@ def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, l
         # Load LLaVA model
         if 'lora' in model_name.lower() and model_base is not None:
             lora_cfg_pretrained = AutoConfig.from_pretrained(model_path)
+            lora_cfg_pretrained.init_device  = 'meta'
             tokenizer = AutoTokenizer.from_pretrained(model_base, use_fast=False)
             print('Loading LLaVA from base model...')
             model = LlavaLlamaForCausalLM.from_pretrained(model_base, low_cpu_mem_usage=True, config=lora_cfg_pretrained, **kwargs)
