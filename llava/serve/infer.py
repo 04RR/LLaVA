@@ -24,7 +24,7 @@ def load_image(image_file):
     return image
 
 
-def generate_responses_for_inputs(text_strs, image_paths, tokenizer, model, image_processor, context_len):
+def generate_responses_for_inputs(text_strs, image, tokenizer, model, image_processor, context_len):
     
     disable_torch_init()
     model_name = 'mpt'
@@ -50,8 +50,8 @@ def generate_responses_for_inputs(text_strs, image_paths, tokenizer, model, imag
         roles = conv.roles
 
     inp = text_strs
-    if image_paths is not None:
-        image = load_image(image_paths)
+    if image is not None:
+        # image = load_image(image_paths)
         image_tensor = image_processor.preprocess(image, return_tensors='pt')['pixel_values'].half().cuda()
         
         if model.config.mm_use_im_start_end:
